@@ -1,89 +1,73 @@
 import Link from "next/link";
-import Image from "next/image";
 import { format } from "date-fns";
-import { Post, getWordCount } from "@/lib/notion";
 import { Badge } from "@/components/ui/badge";
 import { calculateReadingTime } from "@/lib/utils";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Clock, Calendar, ArrowUpRight } from "lucide-react";
+import { PostSummary, normalizeTagToSlug } from "@/lib/notion";
+import Reveal from "@/components/blog/reveal";
+import { ArticleVisual } from "@/components/blog/article-visual";
 
 interface PostCardProps {
-  post: Post;
+  post: PostSummary & { estimatedWords?: number };
+  index?: number;
 }
 
-export default function PostCard({ post }: PostCardProps) {
-  const wordCount = post.content ? getWordCount(post.content) : 0;
-  const readingTime = calculateReadingTime(wordCount);
+export default function PostCard({ post, index = 0 }: PostCardProps) {
+  const readingTime = calculateReadingTime(post.estimatedWords || 350);
 
   return (
-    <Card className="group relative pt-0 overflow-hidden hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <Link
-        href={`/posts/${post.slug}`}
-        className="absolute inset-0 z-10"
-        aria-label={post.title}
-      />
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-lg">
-        {post.coverImage ? (
-          <Image
-            src={post.coverImage}
-            alt={post.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+    <Reveal delayMs={index * 80}>
+      <article className="group relative h-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 shadow-[0_18px_38px_rgba(0,0,0,0.26)] transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/60 hover:shadow-[0_24px_45px_rgba(88,28,135,0.24)]">
+        <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[linear-gradient(140deg,rgba(139,92,246,0.15),transparent_35%,transparent)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+        <Link href={`/blog/${post.slug}`} className="block" prefetch>
+          <ArticleVisual
+            slug={post.slug}
+            title={post.title}
+            imageUrl={post.coverImage}
+            sizes="(max-width: 768px) 92vw, (max-width: 1200px) 44vw, 520px"
+            className="mb-4 max-w-[520px] border-zinc-800 bg-zinc-950"
+            imageClassName="transition-transform duration-500 group-hover:scale-[1.03]"
           />
-        ) : (
-          <div className="absolute inset-0 bg-muted/80" />
-        )}
-        {post.category && (
-          <div className="absolute top-4 left-4 z-20">
-            <Badge
-              variant="secondary"
-              className="backdrop-blur-sm bg-background/80 shadow-sm"
-            >
-              {post.category}
-            </Badge>
-          </div>
-        )}
-      </div>
-      <CardHeader className="space-y-2">
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <Calendar className="h-4 w-4" />
-            <span>{format(new Date(post.date), "MMM d, yyyy")}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4" />
+
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+            <time dateTime={post.date}>{format(new Date(post.date), "MMM d, yyyy")}</time>
+            <span>•</span>
             <span>{readingTime}</span>
+            {post.category ? (
+              <>
+                <span>•</span>
+                <span>{post.category}</span>
+              </>
+            ) : null}
           </div>
-        </div>
-        <div className="group-hover:pr-8 transition-all duration-300">
-          <h2 className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+
+          <h2 className="text-2xl font-semibold tracking-tight text-zinc-100 transition-colors duration-300 group-hover:text-violet-200">
             {post.title}
           </h2>
-          <ArrowUpRight className="absolute top-[7.5rem] right-6 h-6 w-6 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 text-primary" />
-        </div>
-        <p className="text-muted-foreground line-clamp-2">{post.description}</p>
-      </CardHeader>
-      <CardContent>
-        {post.author && (
-          <p className="text-sm text-muted-foreground">By {post.author}</p>
-        )}
-      </CardContent>
-      {post.tags && post.tags.length > 0 && (
-        <CardFooter>
-          <div className="flex gap-2 flex-wrap">
+
+          <p className="mt-3 text-base leading-8 text-zinc-300">{post.description}</p>
+        </Link>
+
+        {post.tags.length > 0 ? (
+          <div className="mt-5 flex flex-wrap gap-2">
             {post.tags.map((tag) => (
-              <Badge key={tag} variant="outline" className="bg-background/80">
-                {tag}
-              </Badge>
+              <Link
+                key={tag}
+                href={`/blog/tag/${normalizeTagToSlug(tag)}`}
+                prefetch
+                className="inline-flex"
+              >
+                <Badge
+                  variant="outline"
+                  className="rounded-full border-zinc-700 bg-zinc-900 text-zinc-300 transition-colors hover:border-violet-400/60 hover:text-violet-200"
+                >
+                  {tag}
+                </Badge>
+              </Link>
             ))}
           </div>
-        </CardFooter>
-      )}
-    </Card>
+        ) : null}
+      </article>
+    </Reveal>
   );
 }

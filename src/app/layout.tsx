@@ -1,31 +1,42 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Darker_Grotesque, Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Layout from "@/components/layout";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
-const inter = Inter({ subsets: ["latin"] });
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-site.com";
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+});
+const darkerGrotesque = Darker_Grotesque({
+  subsets: ["latin"],
+  weight: ["700"],
+  variable: "--font-darker-grotesque",
+});
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Gesturs - The Notion Blog",
-    template: `%s | Gesturs`,
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: "A blog built with Next.js and Notion",
+  description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: SITE_URL,
+  },
   openGraph: {
-    title: "Gesturs - The Notion Blog",
-    description: "A blog built with Next.js and Notion",
-    url: siteUrl,
-    siteName: "Gesturs",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: SITE_NAME,
     images: [
       {
-        url: `${siteUrl}/opengraph-image.png`,
+        url: `${SITE_URL}/opengraph-image.png`,
         width: 1200,
         height: 630,
-        alt: "Gesturs - The Notion Blog",
+        alt: SITE_NAME,
       },
     ],
     locale: "en_US",
@@ -33,9 +44,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Gesturs - The Notion Blog",
-    description: "A blog built with Next.js and Notion",
-    images: [`${siteUrl}/opengraph-image.png`],
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [`${SITE_URL}/opengraph-image.png`],
   },
   robots: {
     index: true,
@@ -50,17 +61,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
   },
-  manifest: `${siteUrl}/site.webmanifest`,
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  themeColor: "#F9FAFB",
 };
 
 export default function RootLayout({
@@ -70,13 +75,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+      <body
+        className={`${inter.variable} ${spaceGrotesk.variable} ${darkerGrotesque.variable} font-sans`}
+      >
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <Layout>{children}</Layout>
         </ThemeProvider>
       </body>

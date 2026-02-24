@@ -1,129 +1,128 @@
-import { cn } from "@/lib/utils";
-import Image, { type ImageProps } from "next/image";
+import Image from "next/image";
+import Link from "next/link";
 import type React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { Badge } from "./ui/badge";
+import { slugifyText } from "@/lib/utils";
+import { StyledQuote } from "@/components/blog/styled-quote";
+
+const toPlainText = (children?: React.ReactNode): string => {
+  if (!children) return "";
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) {
+    return children.map((child) => toPlainText(child)).join(" ");
+  }
+  if (typeof children === "object" && "props" in children) {
+    return toPlainText((children as { props?: { children?: React.ReactNode } }).props?.children);
+  }
+  return "";
+};
 
 const components = {
-  h1: ({ children }: { children?: React.ReactNode }) => (
-    <h1 className="mb-4 font-bold text-4xl">{children}</h1>
-  ),
+  h1: ({ children }: { children?: React.ReactNode }) => {
+    const id = slugifyText(toPlainText(children));
+    return (
+      <h2 id={id} className="mt-14 mb-5 text-3xl font-semibold tracking-tight text-[#111827] dark:text-zinc-100">
+        {children}
+      </h2>
+    );
+  },
+  h2: ({ children }: { children?: React.ReactNode }) => {
+    const id = slugifyText(toPlainText(children));
+    return (
+      <h2 id={id} className="mt-14 mb-5 text-3xl font-semibold tracking-tight text-[#111827] dark:text-zinc-100">
+        {children}
+      </h2>
+    );
+  },
+  h3: ({ children }: { children?: React.ReactNode }) => {
+    const id = slugifyText(toPlainText(children));
+    return (
+      <h3 id={id} className="mt-10 mb-4 text-2xl font-medium tracking-tight text-[#1F2937] dark:text-zinc-200">
+        {children}
+      </h3>
+    );
+  },
   p: ({ children }: { children?: React.ReactNode }) => (
-    <p className="mb-4">{children}</p>
+    <p className="mb-6 text-lg leading-[1.9] text-[#475569] dark:text-zinc-300">{children}</p>
   ),
-  a: ({ children, href }: { children?: React.ReactNode; href?: string }) => (
-    <a href={href} className="text-blue-500">
-      {children}
-    </a>
-  ),
+  a: ({ children, href }: { children?: React.ReactNode; href?: string }) => {
+    if (href?.startsWith("/")) {
+      return (
+        <Link href={href} className="link-underline text-violet-700 dark:text-violet-300" prefetch>
+          {children}
+        </Link>
+      );
+    }
+
+    return (
+      <a
+        href={href}
+        className="link-underline text-violet-700 dark:text-violet-300"
+        target="_blank"
+        rel="noreferrer"
+      >
+        {children}
+      </a>
+    );
+  },
   ul: ({ children }: { children?: React.ReactNode }) => (
-    <ul className="mb-4 list-disc pl-5">{children}</ul>
+    <ul className="mb-8 list-disc space-y-3 pl-6 text-lg leading-[1.9] text-[#475569] dark:text-zinc-300">{children}</ul>
   ),
   ol: ({ children }: { children?: React.ReactNode }) => (
-    <ol className="mb-4 list-decimal pl-5">{children}</ol>
+    <ol className="mb-8 list-decimal space-y-3 pl-6 text-lg leading-[1.9] text-[#475569] dark:text-zinc-300">{children}</ol>
   ),
-  li: ({ children }: { children?: React.ReactNode }) => (
-    <li className="mb-2">{children}</li>
-  ),
+  li: ({ children }: { children?: React.ReactNode }) => <li>{children}</li>,
   blockquote: ({ children }: { children?: React.ReactNode }) => (
-    <blockquote className="mb-4 border-neutral-300 border-l-2 py-2 pl-4 italic">
-      {children}
-    </blockquote>
+    <StyledQuote>{children}</StyledQuote>
+  ),
+  hr: () => (
+    <div className="my-12 h-px w-full bg-gradient-to-r from-transparent via-zinc-300 to-transparent dark:via-zinc-700" />
   ),
   code: ({
     className,
     children,
-    ...props
   }: {
     className?: string;
     children?: React.ReactNode;
   }) => {
-    const match = /language-(\w+)/.exec(className || "");
-    return match ? (
-      <SyntaxHighlighter
-        style={vscDarkPlus}
-        language={match[1]}
-        PreTag="div"
-        {...props}
-        className="rounded-md [&>code]:bg-transparent [&>code]:p-2 [&>code]:rounded-md"
-      >
-        {String(children).replace(/\n$/, "")}
-      </SyntaxHighlighter>
-    ) : (
+    const isBlock = !!className?.includes("language-");
+
+    if (isBlock) {
+      return (
+        <code className="block overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-50 p-5 font-mono text-sm leading-7 text-[#1F2937] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
+          {children}
+        </code>
+      );
+    }
+
+    return (
       <Badge variant="pre" className="font-mono rounded-md text-sm">
         {children}
       </Badge>
     );
   },
-  pre: ({ className, ...props }: React.HTMLAttributes<HTMLPreElement>) => {
-    return <pre className={cn("bg-transparent p-0", className)} {...props} />;
-  },
+  pre: ({ children }: { children?: React.ReactNode }) => (
+    <pre className="my-8 overflow-x-auto">{children}</pre>
+  ),
   img: ({ src, alt }: { src?: string | Blob; alt?: string }) => {
     const imageUrl = src
       ? typeof src === "string"
         ? src
         : URL.createObjectURL(src)
       : "";
+
     return (
       <Image
         src={imageUrl}
-        alt={alt || ""}
-        className="mb-4 h-auto w-full rounded-md"
-        width={1000}
-        height={1000}
+        alt={alt || "Blog image"}
+        className="my-8 h-auto w-full max-w-[640px] rounded-lg border border-zinc-200 dark:border-zinc-800"
+        width={1200}
+        height={675}
+        sizes="(max-width: 768px) 92vw, 640px"
+        loading="lazy"
       />
     );
   },
-  h2: ({ children }: { children?: React.ReactNode }) => (
-    <h2 className="mb-2 font-bold text-2xl">{children}</h2>
-  ),
-  h3: ({ children }: { children?: React.ReactNode }) => (
-    <h3 className="mb-1 font-bold text-xl">{children}</h3>
-  ),
-  h4: ({ children }: { children?: React.ReactNode }) => (
-    <h4 className="mb-1 font-bold text-lg">{children}</h4>
-  ),
-  h5: ({ children }: { children?: React.ReactNode }) => (
-    <h5 className="mb-1 font-bold text-base">{children}</h5>
-  ),
-  h6: ({ children }: { children?: React.ReactNode }) => (
-    <h6 className="mb-1 font-bold text-sm">{children}</h6>
-  ),
-  table: ({ children }: { children?: React.ReactNode }) => (
-    <Table className="rounded-md">{children}</Table>
-  ),
-  thead: ({ children }: { children?: React.ReactNode }) => (
-    <TableHeader className="bg-muted first:rounded-t-md">
-      {children}
-    </TableHeader>
-  ),
-  tbody: ({ children }: { children?: React.ReactNode }) => (
-    <TableBody className="[&>tr:nth-child(even)]:bg-muted/50">
-      {children}
-    </TableBody>
-  ),
-  tr: ({ children }: { children?: React.ReactNode }) => (
-    <TableRow className="border-border group">{children}</TableRow>
-  ),
-  td: ({ children }: { children?: React.ReactNode }) => (
-    <TableCell className="border-r border-border last:border-r-0 group-last:first:rounded-bl-md group-last:last:rounded-br-md">
-      {children}
-    </TableCell>
-  ),
-  th: ({ children }: { children?: React.ReactNode }) => (
-    <TableHead className="font-bold  border-r border-border last:border-r-0 first:rounded-tl-md last:rounded-tr-md">
-      {children}
-    </TableHead>
-  ),
 };
 
 export { components };

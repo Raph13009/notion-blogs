@@ -1,6 +1,6 @@
 import { permanentRedirect } from "next/navigation";
 
-export default async function LegacyPostRoute({
+export default async function LegacySlugRoute({
   params,
 }: {
   params: Promise<{ slug: string }>;

@@ -1,24 +1,47 @@
-import { getPostsFromCache, Post } from "@/lib/notion";
 import { MetadataRoute } from "next";
+import { getPublishedPosts, getTagIndex, normalizeTagToSlug } from "@/lib/notion";
+import { canonicalUrl } from "@/lib/site";
+import { TOPIC_CONFIG } from "@/lib/blog-taxonomy";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://your-site.com";
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [posts, tags] = await Promise.all([getPublishedPosts(), getTagIndex()]);
 
-  const posts = getPostsFromCache();
-  const postUrls = posts.map((post: Post) => ({
-    url: `${siteUrl}/posts/${post.slug}`,
-    lastModified: new Date(post.date),
+  const postUrls = posts.map((post) => ({
+    url: canonicalUrl(`/blog/${post.slug}`),
+    lastModified: new Date(post.lastEditedTime || post.date),
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
 
+  const tagUrls = tags.map((tag) => ({
+    url: canonicalUrl(`/blog/tag/${normalizeTagToSlug(tag)}`),
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
+  }));
+
+  const topicUrls = Object.keys(TOPIC_CONFIG).map((topic) => ({
+    url: canonicalUrl(`/blog/topic/${topic}`),
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
   return [
     {
-      url: siteUrl,
+      url: canonicalUrl("/blog"),
       lastModified: new Date(),
-      changeFrequency: "daily" as const,
+      changeFrequency: "daily",
       priority: 1,
     },
+    {
+      url: canonicalUrl("/blog/estimateur-mvp"),
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    ...topicUrls,
     ...postUrls,
+    ...tagUrls,
   ];
 }
